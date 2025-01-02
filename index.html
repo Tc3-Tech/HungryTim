@@ -14,7 +14,7 @@
     
     <script type="text/babel">
         const HungryTim = () => {
-            const [piesEaten, setPiesEaten] = React.useState(0);
+            const [fullness, setFullness] = React.useState(0);
             const [isExploded, setIsExploded] = React.useState(false);
             const [scale, setScale] = React.useState(1);
             const [currentPlayer, setCurrentPlayer] = React.useState(1);
@@ -22,9 +22,10 @@
             const [explosionThreshold] = React.useState(Math.floor(Math.random() * 9) + 4);
             const [messiness, setMessiness] = React.useState([]);
             const [splatters, setSplatters] = React.useState([]);
+            const [pieSize, setPieSize] = React.useState(1);
 
             React.useEffect(() => {
-                if (piesEaten >= explosionThreshold) {
+                if (fullness >= explosionThreshold) {
                     setIsExploded(true);
                     setLoser(currentPlayer);
                     setSplatters(Array(20).fill().map(() => ({
@@ -36,9 +37,9 @@
                         type: Math.random() > 0.5 ? '🩸' : '💥'
                     })));
                 } else {
-                    setScale(1 + (piesEaten * 0.1));
-                    if (piesEaten > 0) {
-                        const newMess = Array(Math.floor(piesEaten/2) + 1).fill().map(() => ({
+                    setScale(1 + (fullness * 0.1));
+                    if (fullness > 0) {
+                        const newMess = Array(Math.floor(fullness/2) + 1).fill().map(() => ({
                             left: `${Math.random() * 80 + 10}%`,
                             top: `${Math.random() * 80 + 10}%`,
                             size: `${Math.random() * 3 + 1}rem`,
@@ -49,129 +50,147 @@
                         setMessiness(newMess);
                     }
                 }
-            }, [piesEaten, explosionThreshold, currentPlayer]);
+            }, [fullness, explosionThreshold, currentPlayer]);
 
             const feedTim = () => {
                 if (!isExploded) {
-                    setPiesEaten(prev => prev + 1);
+                    setFullness(prev => prev + pieSize);
                     setCurrentPlayer(prev => prev === 1 ? 2 : 1);
+                    setPieSize(1); // Reset pie size for next player
                 }
             };
 
             const resetTim = () => {
-                setPiesEaten(0);
+                setFullness(0);
                 setIsExploded(false);
                 setScale(1);
                 setCurrentPlayer(1);
                 setLoser(null);
                 setMessiness([]);
                 setSplatters([]);
+                setPieSize(1);
             };
 
             return (
-                <div className="flex items-center gap-12 p-8">
-                    <div className="flex flex-col gap-4 min-w-48">
-                        <div className="text-xl font-bold">Pies eaten: {piesEaten}</div>
-                        <div className={`text-lg ${!isExploded ? 'animate-pulse' : ''}`}>
-                            {!isExploded ? `Player ${currentPlayer}'s turn` : `Player ${loser} lost!`}
-                        </div>
-                        
-                        <button
-                            onClick={feedTim}
-                            disabled={isExploded}
-                            className={`px-4 py-2 rounded ${isExploded ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-                        >
-                            Feed Tim a Pie 🥧
-                        </button>
-                        
-                        {isExploded && (
-                            <button
-                                onClick={resetTim}
-                                className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
-                            >
-                                New Game
-                            </button>
-                        )}
-                    </div>
+                <div className="flex flex-col items-center gap-8 p-8">
+                    <div className="text-2xl font-bold">Tim's Fullness: {fullness.toFixed(1)}</div>
                     
-                    {!isExploded ? (
-                        <div 
-                            className="relative transition-transform duration-300"
-                            style={{ transform: `scale(${scale})` }}
-                        >
-                            <div className="w-32 h-32 bg-orange-200 rounded-full relative">
-                                <div className="absolute bottom-0 w-24 h-16 bg-gray-700 rounded-b-full left-4" 
-                                     style={{
-                                         filter: `blur(${piesEaten * 0.5}px)`,
-                                         transform: `scaleX(${1 + piesEaten * 0.02})`
-                                     }}></div>
-                                
-                                <div className="absolute top-12 left-8 w-4 h-4 bg-black rounded-full"
-                                     style={{transform: `translateY(${piesEaten}px)`}}></div>
-                                <div className="absolute top-12 right-8 w-4 h-4 bg-black rounded-full"
-                                     style={{transform: `translateY(${piesEaten}px)`}}></div>
-                                
-                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-6 bg-red-400 rounded-full"
-                                     style={{
-                                         transform: `scaleY(${1 + piesEaten * 0.1})`,
-                                         filter: `blur(${piesEaten * 0.3}px)`
-                                     }}></div>
-
-                                {piesEaten > 2 && Array(Math.floor(piesEaten/2)).fill().map((_, idx) => (
-                                    <div
-                                        key={`drool-${idx}`}
-                                        className="absolute bg-blue-200 opacity-60 rounded-b-full animate-pulse"
-                                        style={{
-                                            left: `${Math.random() * 40 + 30}%`,
-                                            height: `${Math.random() * 2 + 1}rem`,
-                                            width: `${Math.random() * 1 + 0.5}rem`,
-                                            bottom: '-20px',
-                                            transform: `rotate(${Math.random() * 20 - 10}deg)`,
-                                            transformOrigin: 'top'
-                                        }}
-                                    />
-                                ))}
+                    <div className="flex items-center gap-12">
+                        <div className="flex flex-col gap-4 min-w-48">
+                            <div className={`text-lg ${!isExploded ? 'animate-pulse' : ''}`}>
+                                {!isExploded ? `Player ${currentPlayer}'s turn` : `Player ${loser} lost!`}
                             </div>
                             
-                            <div className="relative w-48 h-48 bg-blue-500 rounded-3xl -mt-8 overflow-hidden">
-                                {messiness.map((mess, idx) => (
+                            {!isExploded && (
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm">Pie Size: {pieSize.toFixed(1)}</label>
+                                    <input 
+                                        type="range" 
+                                        min="0.1" 
+                                        max="3" 
+                                        step="0.1" 
+                                        value={pieSize}
+                                        onChange={(e) => setPieSize(parseFloat(e.target.value))}
+                                        className="w-full"
+                                    />
+                                    <button
+                                        onClick={feedTim}
+                                        className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white"
+                                    >
+                                        Feed Tim {pieSize.toFixed(1)} Pie{pieSize !== 1 ? 's' : ''} 🥧
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {isExploded && (
+                                <button
+                                    onClick={resetTim}
+                                    className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white"
+                                >
+                                    New Game
+                                </button>
+                            )}
+                        </div>
+                        
+                        {!isExploded ? (
+                            <div 
+                                className="relative transition-transform duration-300"
+                                style={{ transform: `scale(${scale})` }}
+                            >
+                                <div className="w-32 h-32 bg-orange-200 rounded-full relative">
+                                    <div className="absolute bottom-0 w-24 h-16 bg-gray-700 rounded-b-full left-4" 
+                                         style={{
+                                             filter: `blur(${fullness * 0.5}px)`,
+                                             transform: `scaleX(${1 + fullness * 0.02})`
+                                         }}></div>
+                                    
+                                    <div className="absolute top-12 left-8 w-4 h-4 bg-black rounded-full"
+                                         style={{transform: `translateY(${fullness}px)`}}></div>
+                                    <div className="absolute top-12 right-8 w-4 h-4 bg-black rounded-full"
+                                         style={{transform: `translateY(${fullness}px)`}}></div>
+                                    
+                                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-6 bg-red-400 rounded-full"
+                                         style={{
+                                             transform: `scaleY(${1 + fullness * 0.1})`,
+                                             filter: `blur(${fullness * 0.3}px)`
+                                         }}></div>
+
+                                    {fullness > 2 && Array(Math.floor(fullness/2)).fill().map((_, idx) => (
+                                        <div
+                                            key={`drool-${idx}`}
+                                            className="absolute bg-blue-200 opacity-60 rounded-b-full animate-pulse"
+                                            style={{
+                                                left: `${Math.random() * 40 + 30}%`,
+                                                height: `${Math.random() * 2 + 1}rem`,
+                                                width: `${Math.random() * 1 + 0.5}rem`,
+                                                bottom: '-20px',
+                                                transform: `rotate(${Math.random() * 20 - 10}deg)`,
+                                                transformOrigin: 'top'
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                                
+                                <div className="relative w-48 h-48 bg-blue-500 rounded-3xl -mt-8 overflow-hidden">
+                                    {messiness.map((mess, idx) => (
+                                        <div
+                                            key={`mess-${idx}`}
+                                            className="absolute"
+                                            style={{
+                                                left: mess.left,
+                                                top: mess.top,
+                                                fontSize: mess.size,
+                                                transform: `rotate(${mess.rotation})`,
+                                                opacity: mess.opacity
+                                            }}
+                                        >
+                                            {mess.type}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <div className="text-6xl">💥</div>
+                                {splatters.map((splatter, idx) => (
                                     <div
-                                        key={`mess-${idx}`}
-                                        className="absolute"
+                                        key={`splatter-${idx}`}
+                                        className="absolute animate-ping"
                                         style={{
-                                            left: mess.left,
-                                            top: mess.top,
-                                            fontSize: mess.size,
-                                            transform: `rotate(${mess.rotation})`,
-                                            opacity: mess.opacity
+                                            left: splatter.left,
+                                            top: splatter.top,
+                                            fontSize: splatter.size,
+                                            transform: `rotate(${splatter.rotation})`,
+                                            animationDelay: `${splatter.delay}s`,
+                                            animationDuration: '1s'
                                         }}
                                     >
-                                        {mess.type}
+                                        {splatter.type}
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    ) : (
-                        <div className="relative">
-                            <div className="text-6xl">💥</div>
-                            {splatters.map((splatter, idx) => (
-                                <div
-                                    key={`splatter-${idx}`}
-                                    className="absolute animate-ping"
-                                    style={{
-                                        left: splatter.left,
-                                        top: splatter.top,
-                                        fontSize: splatter.size,
-                                        transform: `rotate(${splatter.rotation})`,
-                                        animationDelay: `${splatter.delay}s`,
-                                        animationDuration: '1s'
-                                    }}
-                                >
-                                    {splatter.type}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             );
         };
